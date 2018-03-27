@@ -82,7 +82,7 @@ rankall <- function(outcome, num = "best") {
   ## For each state, find the hospital of the given rank
   ## Return a data frame with the hospital names and the
   ## (abbreviated) state name
-  data<-read.csv(file.path("rprog_data_ProgAssignment3-data","outcome-of-care-measures.csv"))
+  data<-read.csv(file.path("rprog_data_ProgAssignment3-data","outcome-of-care-measures.csv"), na.strings = "Not Available")
   valid_outcomes<-list("heart attack"="Hospital.30.Day.Death..Mortality..Rates.from.Heart.Attack",
                        "heart failure"="Hospital.30.Day.Death..Mortality..Rates.from.Heart.Failure",
                        "pneumonia"="Hospital.30.Day.Death..Mortality..Rates.from.Pneumonia" )
@@ -92,8 +92,6 @@ rankall <- function(outcome, num = "best") {
   }
   #get the right name of the column depending on the outcome
   outcome_name<-valid_outcomes[[outcome]]
-  #convert Not Available to NA to avoid warning in conversion with numeric
-  data[data=="Not Available"]<-NA
   #consider only complete cases
   data<-data[complete.cases(data[,outcome_name]),]
   
