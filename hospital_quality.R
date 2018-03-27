@@ -76,3 +76,45 @@ rankhospital <- function(state, outcome, num = "best") {
   
 }
 
+rankall <- function(outcome, num = "best") {
+  ## Read outcome data
+  ## Check that state and outcome are valid
+  ## For each state, find the hospital of the given rank
+  ## Return a data frame with the hospital names and the
+  ## (abbreviated) state name
+  data<-read.csv(file.path("rprog_data_ProgAssignment3-data","outcome-of-care-measures.csv"))
+  valid_outcomes<-list("heart attack"="Hospital.30.Day.Death..Mortality..Rates.from.Heart.Attack",
+                       "heart failure"="Hospital.30.Day.Death..Mortality..Rates.from.Heart.Failure",
+                       "pneumonia"="Hospital.30.Day.Death..Mortality..Rates.from.Pneumonia" )
+  #check if the parameter outcome is valid
+  if(!(outcome %in% names(valid_outcomes))){
+    stop("invalid outcome")
+  }
+  #get the right name of the column depending on the outcome
+  outcome_name<-valid_outcomes[[outcome]]
+  #convert Not Available to NA to avoid warning in conversion with numeric
+  data[data=="Not Available"]<-NA
+  #consider only complete cases
+  data<-data[complete.cases(data[,outcome_name]),]
+  
+  my_split <- split(data, data$State)
+  my_output <- lapply(my_split, function (my_df){
+    my_df <- my_df[order(my_df["State"], my_df[outcome_name], my_df["Hospital.Name"]) , ]
+    
+    # Determine the row that we want
+    if (num == "best") {
+      index <- 1
+    } else if (num == "worst")
+      index <- nrow(my_df)     # this specifies last row
+    else {
+      index <- num                # Assume rank is an integer
+    } 
+    
+    # Extract the desired data by row and column and build dataframe output
+    hospital <- my_df[index, c("Hospital.Name")]
+    state <- my_df[1, c("State")]
+    data.frame(hospital, state)
+    
+  }  ) # close lapply
+  do.call(rbind.data.frame, my_output)
+}
