@@ -9,7 +9,8 @@ merge_tidy_accelerometer<-function(basePath="UCI HAR Dataset",folderName1="test"
 
 
 tidy_accelerometer<-function(basePath="UCI HAR Dataset",folderName="test",fileName="X_test.txt",activityFileName="y_test.txt"){
-  
+  #load dplyr
+  library(dplyr)
   path_x_test<-file.path(basePath,folderName,fileName)
   #read the file with data
   x_test<-read.csv(path_x_test,sep = "",header = F)
@@ -20,6 +21,8 @@ tidy_accelerometer<-function(basePath="UCI HAR Dataset",folderName="test",fileNa
   col_names<-col_names[,2]
   #convert the factors to string
   col_names<-as.character(levels(col_names))[col_names]
+  #clean the column names
+  col_names<-gsub(pattern = "-|\\(|\\)", replacement = "", x = col_names)
   #give the column names to the data
   names(x_test)<-col_names
   #get only the column with std or mean in the name
@@ -41,5 +44,9 @@ tidy_accelerometer<-function(basePath="UCI HAR Dataset",folderName="test",fileNa
   #convert to numeric
   s<-as.numeric(subjects[,1])
   #add the subjects to the data
-  x_test<-mutate(x_test,subjects=s)
+  x_test<-mutate(x_test,subject=s)
 }
+
+#this code is for the point 5 of the assignment
+#data_set_group<-data_set%>%group_by(subjects,activity)
+#summarise_at(data_set_group,vars(everything()), funs(mean(.)))
