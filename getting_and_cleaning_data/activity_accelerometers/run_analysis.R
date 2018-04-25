@@ -1,8 +1,8 @@
-merge_tidy_accelerometer<-function(basePath="UCI HAR Dataset",folderName1="test",folderName2="train",fileName1="X_test.txt",fileName2="X_train.txt",activityFileName1="y_test.txt",activityFileName2="y_train.txt"){
+merge_tidy_accelerometer<-function(basePath="UCI HAR Dataset",folderName1="test",folderName2="train"){
   #call the function on the train set
-  train<-tidy_accelerometer(basePath,folderName1,fileName1,activityFileName1)
+  train<-tidy_accelerometer(basePath,folderName2,paste("X_",folderName2,".txt",sep = ""),paste("y_",folderName2,".txt",sep = ""))
   #call the function on the test set
-  test<-tidy_accelerometer(basePath,folderName2,fileName2,activityFileName2)
+  test<-tidy_accelerometer(basePath,folderName1,paste("X_",folderName1,".txt",sep = ""),paste("y_",folderName1,".txt",sep = ""))
   #perform the union of the two data set
   rbind(train,test)
 }
@@ -36,4 +36,10 @@ tidy_accelerometer<-function(basePath="UCI HAR Dataset",folderName="test",fileNa
   activity_labels<-as.character(levels(activity_labels))[activity_labels]
   #add the activity labels to the data
   x_test<-mutate(x_test,activity=activity_labels)
+  #read the subjects
+  subjects<-read.csv(file.path(basePath,folderName,paste("subject_",folderName,".txt",sep = "")),header = F)
+  #convert to numeric
+  s<-as.numeric(subjects[,1])
+  #add the subjects to the data
+  x_test<-mutate(x_test,subjects=s)
 }
