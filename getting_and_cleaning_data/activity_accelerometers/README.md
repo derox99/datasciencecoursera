@@ -1,0 +1,6 @@
+### Introduction
+The purpose of this assignment is to clean and merge two datasets of measures obtained by the accelerometers of a Samsung Galaxy S smartphone. These measures are collected while the people were doing six different activities. The data is divided in test set and train set. In other files there are the names of the variables taken into account, the person who perform the activity, the id of the activity and its description. The script has to gather all these data and produces one tidy data set joining the two sets. More information on data here http://archive.ics.uci.edu/ml/datasets/Human+Activity+Recognition+Using+Smartphones.
+
+### run_analisys.R
+The script is divided in two functions: tidy_accelerometer and merge_tidy_accelerometer. The first has four parameters: the base path of where all the files data are, the folder name, the name of file where the data is and the name of file where the activities are. The function reads the file with the column names, clean it and assign it to the columns of the data set. Extracts only the column with mean or std in the name and then attach two more columns with the subject and the activity label.
+The second function calls the tidy_accelerometer function on the two data set because they have the same structure and finally join them.
