@@ -12,7 +12,7 @@ indexCoalComb<-intersect(indexCoal,indexComb)
 sccCoalComb<-as.character(SCC[indexCoalComb,"SCC"])
 NEICoal<-NEI[NEI$SCC %in% sccCoalComb,]
 coalUSA<-NEICoal %>% group_by(year) %>% summarise(Emissions=sum(Emissions))
-qplot(x = year, y=Emissions, data=coalUSA, geom = "line")
+qplot(x = year, y=Emissions, data=coalUSA, geom = "line", main = "Emissions from coal combustion related sources")
 
 
 indexVehicle<-grep("Vehicle",SCC$EI.Sector)
@@ -24,4 +24,9 @@ baltSCC<-merge(x = balt, y = SCC, by.x = "SCC", by.y = "SCC")
 #find vehicle in level two
 baltVehicle<-baltSCC[grep("Vehicle",baltSCC$SCC.Level.Two),]
 baltVehicleGrouped<-baltVehicle %>% group_by(year,SCC.Level.Two) %>% summarise(Emissions=sum(Emissions))
-qplot(x = year, y=Emissions, data=baltVehicleGrouped, color=SCC.Level.Two, geom = "line")
+qplot(x = year, y=Emissions, data=baltVehicleGrouped, color=SCC.Level.Two, geom = "line", main = "Emissions from motor vehicle sources in Baltimore")
+
+
+baltCalif<-NEI[NEI$fips=="24510" | NEI$fips=="06037",]
+baltCalifRoadGrouped<-baltCalif[baltCalif$type=="ON-ROAD",] %>% group_by(year,fips) %>% summarise(Emissions=sum(Emissions))
+qplot(x = year, y=Emissions, data=baltCalifRoadGrouped, color=fips, geom = "line", main = "Emissions from motor vehicle sources in Baltimore and California")
