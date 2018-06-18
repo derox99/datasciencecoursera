@@ -1,0 +1,132 @@
+---
+title: "Impact of weather events in USA"
+author: "Alessio De Rossi"
+date: "13 giugno 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+```
+
+## Synopsis
+
+The goal of this project is to study the impact of the weather events in the USA in terms of damages on people and damages on properties and crops. The data came from the U.S. National Oceanic and Atmospheric Administration’s (NOAA) storm database. The top three events that cause the highest number of injuries and fatalities are TORNADO, EXCESSIVE HEAT and TSTM WIND. The top three events that cause the highest amount of damages on properties and crops are FLOOD, HURRICANE/TYPHOON and TORNADO.
+
+## Data processing
+We read the data directly from the compressed file downloaded from https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2.
+```{r read data, cache=TRUE}
+stormData <- read.table("repdata_data_StormData.csv.bz2", header=T, quote="\"", sep=",")
+```
+We need to perform some elaboration on the economical data represented by the columns PROPDMG and PROPDMGEXP,  because in the first column there is the value and in the second one there is the unit. The same operation has to be performed for the columns CROPDMG and CROPDMGEXP. The columns that begins with "PROP" represents the amount of damages on the properties while the columns that begins with "CROP" represents the amount of damage on the crops.
+```{r}
+uniquePropExp<-unique(stormData$PROPDMGEXP)
+uniqueCropExp<-unique(stormData$CROPDMGEXP)
+unitsExp<-union(uniquePropExp,uniqueCropExp)
+```
+All the possible units are `r unitsExp`. This information is useful to create a function that translate this units to the correct multiplier. Then we can have the right value of the crops and properties damage expressed in dollars.
+```{r process unit, cache=TRUE}
+
+#converts the value based on the unit. Invalid unit return 0
+convertUnit<-function(unit){
+    if(unit=="0" | unit==""){
+      1
+    }else if(unit=="B" | unit=="b"){
+      10^9
+    }else if(unit=="8"){
+      10^8
+    }else if(unit=="7"){
+      10^7
+    }else if(unit=="m" | unit=="M" | unit=="6"){
+      10^6
+    }else if(unit=="5"){
+      10^5
+    }else if(unit=="4"){
+      10^4
+    }else if(unit=="k" | unit=="K" | unit=="3"){
+      10^3
+    }else if(unit=="H" | unit=="h" | unit=="2"){
+      10^2
+    }else if(unit=="1"){
+      10
+    }else{
+      0
+    }
+}
+#using the convert function add a column to the dataset to obtain the right value of multiply value
+stormData$PROPDMG_MUL<-sapply(stormData$PROPDMGEXP,convertUnit)
+#multiply the value to the correct multiplier
+stormData$PROPDMG_CLEAN<-stormData$PROPDMG*stormData$PROPDMG_MUL
+#do the same for the crop damage
+stormData$CROPDMG_MUL<-sapply(stormData$CROPDMGEXP,convertUnit)
+stormData$CROPDMG_CLEAN<-stormData$CROPDMG*stormData$CROPDMG_MUL
+```
+
+Now we perform some elaboration to summarize the amount of damages in properties and crops per weather event.
+```{r crops and properites damages per event}
+propDamagesPerEvent<-
+  stormData %>%
+  group_by(EVTYPE) %>%
+  summarize(propDamages=sum(PROPDMG_CLEAN,na.rm = T))
+
+cropDamagesPerEvent<-
+  stormData %>%
+  group_by(EVTYPE) %>%
+  summarize(cropDamages=sum(CROPDMG_CLEAN,na.rm = T))
+#merge the data to obtain a data frame with three column
+damagesPerEvent<-merge(x=propDamagesPerEvent,y=cropDamagesPerEvent,by.x = "EVTYPE", by.y = "EVTYPE")
+#order the data by the sum of properties and crops damages
+damagesPerEvent<-damagesPerEvent[order((damagesPerEvent$propDamages+damagesPerEvent$cropDamages),decreasing = T),]
+#consider only the first 20 row
+damagesPerEventFiltered<-damagesPerEvent[1:20,]
+#reshape my data in order to crate a stacked bar chart
+damagesPerEventFilteredG<-damagesPerEventFiltered %>% gather(damageType,totalDamage,-EVTYPE)
+
+pD<-ggplot(data=damagesPerEventFilteredG,aes(x=EVTYPE,y=totalDamage, fill=damageType))+geom_bar(stat="identity")+coord_flip()+ggtitle("Total damages in dollars per event type")
+```
+Now we perform some elaboration to summarize the total number of fatalities and injuries per weather event.
+```{r fatalities and injuries per event}
+
+fatalPerEvent<-
+  stormData %>%
+  group_by(EVTYPE) %>%
+  summarize(fatalities=sum(FATALITIES,na.rm = T))
+injPerEvent<-
+  stormData %>%
+  group_by(EVTYPE) %>%
+  summarize(injuries=sum(INJURIES,na.rm = T))
+
+#merge the data to obtain a data frame with three column
+fiPerEvent<-merge(x=fatalPerEvent,y=injPerEvent,by.x = "EVTYPE", by.y = "EVTYPE")
+#order the data by the sum of injuries and fatalities
+fiPerEvent<-fiPerEvent[order((fiPerEvent$fatalities+fiPerEvent$injuries),decreasing = T),]
+#consider only the first 20 row
+fiPerEventFiltered<-fiPerEvent[1:20,]
+#reshape my data in order to crate a stacked bar chart
+fiPerEventFilteredG<-fiPerEventFiltered %>% gather(damageType,totalNumber,-EVTYPE)
+
+p<-ggplot(data=fiPerEventFilteredG,aes(x=EVTYPE,y=totalNumber, fill=damageType))+geom_bar(stat="identity")+coord_flip()+ggtitle("Number of fatalities and injuries per event type")
+
+```
+
+## Results
+The 20 weather events that cause the highest number of fatalities and injuries are
+```{r}
+fiPerEventFiltered
+```
+and here it is the graph:
+```{r}
+p
+```
+
+The 20 weather events that cause the highest impact in economic terms are
+```{r}
+damagesPerEventFiltered
+```
+and here it is the graph:
+```{r}
+pD
+```

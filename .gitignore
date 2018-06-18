@@ -18,3 +18,7 @@ rprog_data_ProgAssignment3-data\.zip
 \.Rhistory
 
 getting_and_cleaning_data/activity_accelerometers/accelerometer_activity_mean\.txt
+
+reproducible_research/impact_weather_events_cache/
+
+reproducible_research/impact_weather_events_files/
